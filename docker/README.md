@@ -116,6 +116,12 @@ Upon registration the following happened:
    * Avro schemas for all the tables were published into Schema Registry
    * Initial snapshots were ingested into Kafka topics
 
+Explore avro schema of `dbserver1-postgres.inventory.customers` topic published in Schema Registry
+In main terminal:
+```
+curl -X GET http://localhost:8081/subjects/dbserver1-postgres.inventory.customers-value/versions/1 | jq '.schema | fromjson'
+```
+
 Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.customers` topic
 In main terminal:
 ```
@@ -126,13 +132,11 @@ docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/
     --property schema.registry.url=http://schema-registry:8081 \
     --topic dbserver1-postgres.inventory.customers
 ```
-Note that all the records from postgres `customer` table have been ingested into Kafka
-
-Explore avro schema of `dbserver1-postgres.inventory.customers` topic published in Schema Registry
-In main terminal:
-```
-curl -X GET http://localhost:8081/subjects/dbserver1-postgres.inventory.customers-value/versions/1 | jq '.schema | fromjson'
-```
+Note that all the records from postgres `customer` table have been ingested into Kafka. Also note the following:
+   * before image ("before" section of avro records) is null. That's because there was no previous versions of the records.
+   * after image ("after" section of avro records) is populated with the current version of corresponding postgres tables
+   * operation ("op field of avro record") is set to 'r'
+   * ts_ms is a kafka ingestion timestamp populated by Debezium Kafka Connector
 
 ### Step 3 : Ingest the initial snapshot from Kafka into Data Lake
 
@@ -217,6 +221,22 @@ In Postgres terminal:
 insert into customers (first_name, last_name, email) values ('D','B','d.n@g.com');
 ```
 
+Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.customers` topic
+In main terminal:
+```
+docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/kafka-avro-console-consumer \
+    --bootstrap-server kafkabroker:9092 \
+    --from-beginning \
+    --property print.key=true \
+    --property schema.registry.url=http://schema-registry:8081 \
+    --topic dbserver1-postgres.inventory.customers
+```
+Note that the new record has been ingested into Kafka. Also note the following:
+   * before image ("before" section of avro records) is null. That's because there was no previous versions of the records.
+   * after image ("after" section of avro records) is populated with the current version of corresponding postgres tables
+   * operation ("op field of avro record") is set to 'c'
+   * ts_ms is a kafka ingestion timestamp populated by Debezium Kafka Connector
+
 In ETL terminal:
 ```
 spark-submit \
@@ -253,6 +273,22 @@ In Postgres terminal:
 update customers set first_name = 'Dmitry' where id = 1005;
 ```
 
+Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.customers` topic
+In main terminal:
+```
+docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/kafka-avro-console-consumer \
+    --bootstrap-server kafkabroker:9092 \
+    --from-beginning \
+    --property print.key=true \
+    --property schema.registry.url=http://schema-registry:8081 \
+    --topic dbserver1-postgres.inventory.customers
+```
+Note that the updated record has been ingested into Kafka. Also note the following:
+   * before image ("before" section of avro records) is populated with the previous version of corresponding postgres tables
+   * after image ("after" section of avro records) is populated with the current version of corresponding postgres tables
+   * operation ("op field of avro record") is set to 'u'
+   * ts_ms is a kafka ingestion timestamp populated by Debezium Kafka Connector
+
 In ETL terminal:
 ```
 spark-submit \
@@ -282,13 +318,37 @@ select after.id, after.first_name, after.last_name, after.email from customers_p
 ```
 Note that the record has been updated
 
-### Step 8: Clean up
+### Step 8: Delete a record from `customers` table in postgres
+
+In Postgres terminal:
+```
+delete from customers where id = 1005;
+```
+
+Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.customers` topic
+In main terminal:
+```
+docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/kafka-avro-console-consumer \
+    --bootstrap-server kafkabroker:9092 \
+    --from-beginning \
+    --property print.key=true \
+    --property schema.registry.url=http://schema-registry:8081 \
+    --topic dbserver1-postgres.inventory.customers
+```
+Note that the deleted record has been ingested into Kafka. Also note the following:
+   * before image ("before" section of avro records) is populated with the previous version of corresponding postgres tables
+   * after image ("after" section of avro records) is null. That's because the record was deleted.
+   * operation ("op field of avro record") is set to 'd'
+   * ts_ms is a kafka ingestion timestamp populated by Debezium Kafka Connector
+
+TODO Finish of delete example (would probably require to modify the source record a bit with Kafka Connect)
+
+### Step 9: Clean up
 
 In main terminal
 ```
 docker-compose -f compose/postgres-kafka-hdfs.yml down
 ```
 
-TODO Example for deletes
 TODO Example for S3
 TODO Example for multiple tables

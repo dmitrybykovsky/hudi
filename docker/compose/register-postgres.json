@@ -11,6 +11,9 @@
         "database.server.name": "dbserver1-postgres",
         "database.whitelist": "inventory",
         "database.history.kafka.bootstrap.servers": "kafkabroker:9092",
-        "database.history.kafka.topic": "schema-changes-postgres.inventory"
+        "database.history.kafka.topic": "schema-changes-postgres.inventory",
+      "transforms": "unwrap",
+      "transforms.unwrap.type":"io.debezium.transforms.UnwrapFromEnvelope",
+      "transforms.unwrap.drop.tombstones":"true"
     }
 }
