@@ -62,7 +62,7 @@ At this point, the docker cluster will be up and running. The demo cluster bring
    * Confluent Schema Registry
    * Kafka Connect
 
-### Step 0 : Open four more terminal windows
+### Step 0 : Open three more terminal windows
 
 First terminal is going to be used to imulate transactional system.
 Open psql shell in the first terminal
@@ -115,6 +115,24 @@ Upon registration the following happened:
    * Separate kafka topics were created for all the postgres tables
    * Avro schemas for all the tables were published into Schema Registry
    * Initial snapshots were ingested into Kafka topics
+
+Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.customers` topic
+In main terminal:
+```
+docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/kafka-avro-console-consumer \
+    --bootstrap-server kafkabroker:9092 \
+    --from-beginning \
+    --property print.key=true \
+    --property schema.registry.url=http://schema-registry:8081 \
+    --topic dbserver1-postgres.inventory.customers
+```
+Note that all the records from postgres `customer` table have been ingested into Kafka
+
+Explore avro schema of `dbserver1-postgres.inventory.customers` topic published in Schema Registry
+In main terminal:
+```
+curl -X GET http://localhost:8081/subjects/dbserver1-postgres.inventory.customers-value/versions/1 | jq '.schema | fromjson'
+```
 
 ### Step 3 : Ingest the initial snapshot from Kafka into Data Lake
 
@@ -169,7 +187,7 @@ In ETL terminal:
 --table customers_postgres
 ```
 
-After executing the above command a hive table named `customers_postgres` was created
+After executing the above command a hive table named `customers_postgres` is created
 which provides Read-Optimized view for the Copy On Write dataset.
 
 ### Step 5: Run Hive Queries
@@ -270,3 +288,7 @@ In main terminal
 ```
 docker-compose -f compose/postgres-kafka-hdfs.yml down
 ```
+
+TODO Example for deletes
+TODO Example for S3
+TODO Example for multiple tables
