@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 echo "Copying spark default config and setting up configs"
 cp /var/hoodie/ws/docker/demo/config/spark-defaults.conf $SPARK_CONF_DIR/.
 hadoop fs -mkdir -p /var/demo/

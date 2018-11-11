@@ -1,0 +1,265 @@
+version: '3.3'
+services:
+  zookeeper:
+    image: debezium/zookeeper:${DEBEZIUM_VERSION}
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+    - 2181:2181
+    - 2888:2888
+    - 3888:3888
+  kafkabroker:
+    image: debezium/kafka:${DEBEZIUM_VERSION}
+    hostname: kafkabroker
+    container_name: kafkabroker
+    ports:
+    - 9092:9092
+    links:
+    - zookeeper
+    environment:
+    - ZOOKEEPER_CONNECT=zookeeper:2181
+  postgres:
+    image: debezium/example-postgres:${DEBEZIUM_VERSION}
+    hostname: postgres
+    container_name: postgres
+    ports:
+    - 5432:5432
+    environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=postgres
+  schema-registry:
+    image: confluentinc/cp-schema-registry
+    hostname: schema-registry
+    container_name: schema-registry
+    ports:
+    - 8181:8181
+    - 8081:8081
+    environment:
+    - SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL=zookeeper:2181
+    - SCHEMA_REGISTRY_HOST_NAME=schema-registry
+    - SCHEMA_REGISTRY_LISTENERS=http://schema-registry:8081
+    links:
+    - zookeeper
+  connect:
+    image: debezium/connect:${DEBEZIUM_VERSION}
+    hostname: connect
+    container_name: connect
+    ports:
+    - 8083:8083
+    links:
+    - kafkabroker
+    - postgres
+    - schema-registry
+    environment:
+    - BOOTSTRAP_SERVERS=kafkabroker:9092
+    - GROUP_ID=1
+    - CONFIG_STORAGE_TOPIC=my_connect_configs
+    - OFFSET_STORAGE_TOPIC=my_connect_offsets
+    - KEY_CONVERTER=io.confluent.connect.avro.AvroConverter
+    - VALUE_CONVERTER=io.confluent.connect.avro.AvroConverter
+    - INTERNAL_KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+    - INTERNAL_VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+    - CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL=http://schema-registry:8081
+    - CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL=http://schema-registry:8081
+
+  namenode:
+    image: varadarb/hudi-hadoop_2.8.4-namenode:latest
+    hostname: namenode
+    container_name: namenode
+    volumes:
+    - /tmp/hadoop_name:/hadoop/dfs/name
+    environment:
+    - CLUSTER_NAME=hudi_hadoop284_hive232_spark231
+    ports:
+    - "50070:50070"
+    - "8020:8020"
+    env_file:
+    - ./hadoop.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://namenode:50070"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  datanode1:
+    image: varadarb/hudi-hadoop_2.8.4-datanode:latest
+    container_name: datanode1
+    hostname: datanode1
+    environment:
+    - CLUSTER_NAME=hudi_hadoop284_hive232_spark231
+    env_file:
+    - ./hadoop.env
+    ports:
+    - "50075:50075"
+    - "50010:50010"
+    links:
+    - "namenode"
+    - "historyserver"
+    - schema-registry
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://datanode1:50075"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+    - namenode
+    volumes:
+    - /tmp/hadoop_data:/hadoop/dfs/data
+
+  historyserver:
+    image: varadarb/hudi-hadoop_2.8.4-history:latest
+    hostname: historyserver
+    container_name: historyserver
+    environment:
+    - CLUSTER_NAME=hudi_hadoop284_hive232_spark231
+    depends_on:
+    - "namenode"
+    links:
+    - "namenode"
+    ports:
+    - "58188:8188"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://historyserver:8188"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    env_file:
+    - ./hadoop.env
+    volumes:
+    - historyserver:/hadoop/yarn/timeline
+
+  hive-metastore-postgresql:
+    image: bde2020/hive-metastore-postgresql:2.3.0
+    volumes:
+    - hive-metastore-postgresql:/var/lib/postgresql
+    hostname: hive-metastore-postgresql
+    container_name: hive-metastore-postgresql
+
+  hivemetastore:
+    image: varadarb/hudi-hadoop_2.8.4-hive_2.3.3:latest
+    hostname: hivemetastore
+    container_name: hivemetastore
+    links:
+    - "hive-metastore-postgresql"
+    - "namenode"
+    env_file:
+    - ./hadoop.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 hive-metastore-postgresql:5432"
+    ports:
+    - "9083:9083"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "hivemetastore", "9083"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+    - "hive-metastore-postgresql"
+    - "namenode"
+
+  hiveserver:
+    image: varadarb/hudi-hadoop_2.8.4-hive_2.3.3:latest
+    hostname: hiveserver
+    container_name: hiveserver
+    env_file:
+    - ./hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "hivemetastore:9083"
+    ports:
+    - "10000:10000"
+    depends_on:
+    - "hivemetastore"
+    links:
+    - "hivemetastore"
+    - "hive-metastore-postgresql"
+    - "namenode"
+    volumes:
+    - ${HUDI_WS}:/var/hoodie/ws
+
+  sparkmaster:
+    image: varadarb/hudi-hadoop_2.8.4-hive_2.3.3-sparkmaster_2.3.1:latest
+    hostname: sparkmaster
+    container_name: sparkmaster
+    env_file:
+    - ./hadoop.env
+    ports:
+    - "8080:8080"
+    - "7077:7077"
+    environment:
+    - INIT_DAEMON_STEP=setup_spark
+    links:
+    - "hivemetastore"
+    - "hiveserver"
+    - "hive-metastore-postgresql"
+    - "namenode"
+    - schema-registry
+
+  spark-worker-1:
+    image: varadarb/hudi-hadoop_2.8.4-hive_2.3.3-sparkworker_2.3.1:latest
+    hostname: spark-worker-1
+    container_name: spark-worker-1
+    env_file:
+    - ./hadoop.env
+    depends_on:
+    - sparkmaster
+    ports:
+    - "18081:8081"
+    environment:
+    - "SPARK_MASTER=spark://sparkmaster:7077"
+    links:
+    - "hivemetastore"
+    - "hiveserver"
+    - "hive-metastore-postgresql"
+    - "namenode"
+    - schema-registry
+
+  adhoc-1:
+    image: varadarb/hudi-hadoop_2.8.4-hive_2.3.3-sparkadhoc_2.3.1:latest
+    hostname: adhoc-1
+    container_name: adhoc-1
+    env_file:
+    - ./hadoop.env
+    depends_on:
+    - sparkmaster
+    ports:
+    - '4040:4040'
+    environment:
+    - "SPARK_MASTER=spark://sparkmaster:7077"
+    links:
+    - "hivemetastore"
+    - "hiveserver"
+    - "hive-metastore-postgresql"
+    - "namenode"
+    - schema-registry
+    volumes:
+    - ${HUDI_WS}:/var/hoodie/ws
+
+  adhoc-2:
+    image: varadarb/hudi-hadoop_2.8.4-hive_2.3.3-sparkadhoc_2.3.1:latest
+    hostname: adhoc-2
+    container_name: adhoc-2
+    env_file:
+    - ./hadoop.env
+    depends_on:
+    - sparkmaster
+    environment:
+    - "SPARK_MASTER=spark://sparkmaster:7077"
+    links:
+    - "hivemetastore"
+    - "hiveserver"
+    - "hive-metastore-postgresql"
+    - "namenode"
+    - schema-registry
+    volumes:
+    - ${HUDI_WS}:/var/hoodie/ws
+
+volumes:
+  namenode:
+  historyserver:
+  hive-metastore-postgresql:
+
+networks:
+  default:
+
+
