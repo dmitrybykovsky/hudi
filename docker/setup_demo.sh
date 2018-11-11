@@ -9,7 +9,7 @@ mkdir -p /tmp/hadoop_data
 WS_ROOT=`dirname $PWD`
 # restart cluster
 HUDI_WS=${WS_ROOT} docker-compose -f $yml_name down
-HUDI_WS=${WS_ROOT} docker-compose -f $yml_name pull
+#HUDI_WS=${WS_ROOT} docker-compose -f $yml_name pull
 rm -rf /tmp/hadoop_data/*
 rm -rf /tmp/hadoop_name/*
 sleep 5
