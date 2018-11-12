@@ -64,7 +64,7 @@ At this point, the docker cluster will be up and running. The demo cluster bring
 
 ### Step 0 : Open three more terminal windows
 
-First terminal is going to be used to imulate transactional system.
+First terminal is going to be used to emulate transactional system.
 Open psql shell in the first terminal
 ```
 docker-compose -f demo.yml exec postgres env PGOPTIONS="--search_path=inventory" bash -c 'psql -U $POSTGRES_USER postgres'
@@ -72,7 +72,7 @@ docker-compose -f demo.yml exec postgres env PGOPTIONS="--search_path=inventory"
 
 We will refer to this terminal as Postgres terminal
 
-Second terminal is going to be used to imulate ETL.
+Second terminal is going to be used to emulate ETL.
 In real life these steps will be scheduled in some orhestration framework like Oozie or Airflow.
 Open shell session with adhoc-2 container in the second terminal
 ```
