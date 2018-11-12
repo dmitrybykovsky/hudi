@@ -132,11 +132,7 @@ docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/
     --property schema.registry.url=http://schema-registry:8081 \
     --topic dbserver1-postgres.inventory.customers
 ```
-Note that all the records from postgres `customer` table have been ingested into Kafka. Also note the following:
-   * before image ("before" section of avro records) is null. That's because there was no previous versions of the records.
-   * after image ("after" section of avro records) is populated with the current version of corresponding postgres tables
-   * operation ("op field of avro record") is set to 'r'
-   * ts_ms is a kafka ingestion timestamp populated by Debezium Kafka Connector
+Note that all the records from postgres `customer` table have been ingested into Kafka.
 
 ### Step 3 : Ingest the initial snapshot from Kafka into Data Lake
 
@@ -211,7 +207,7 @@ describe customers_postgres;
 
 Check out the snapshot of the data
 ```
-select after.id, after.first_name, after.last_name, after.email from customers_postgres;
+select * from customers_postgres;
 ```
 
 ### Step 6: Insert a new record into `customers` table in postgres
@@ -231,11 +227,7 @@ docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/
     --property schema.registry.url=http://schema-registry:8081 \
     --topic dbserver1-postgres.inventory.customers
 ```
-Note that the new record has been ingested into Kafka. Also note the following:
-   * before image ("before" section of avro records) is null. That's because there was no previous versions of the records.
-   * after image ("after" section of avro records) is populated with the current version of corresponding postgres tables
-   * operation ("op field of avro record") is set to 'c'
-   * ts_ms is a kafka ingestion timestamp populated by Debezium Kafka Connector
+Note that the new record has been ingested into Kafka.
 
 In ETL terminal:
 ```
@@ -262,7 +254,7 @@ spark-submit \
 
 In Hive terminal:
 ```
-select after.id, after.first_name, after.last_name, after.email from customers_postgres;
+select * from customers_postgres;
 ```
 Note that new record has been inserted into hive table
 
@@ -283,11 +275,7 @@ docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/
     --property schema.registry.url=http://schema-registry:8081 \
     --topic dbserver1-postgres.inventory.customers
 ```
-Note that the updated record has been ingested into Kafka. Also note the following:
-   * before image ("before" section of avro records) is populated with the previous version of corresponding postgres tables
-   * after image ("after" section of avro records) is populated with the current version of corresponding postgres tables
-   * operation ("op field of avro record") is set to 'u'
-   * ts_ms is a kafka ingestion timestamp populated by Debezium Kafka Connector
+Note that the updated record has been ingested into Kafka.
 
 In ETL terminal:
 ```
@@ -314,7 +302,7 @@ spark-submit \
 
 In Hive terminal:
 ```
-select after.id, after.first_name, after.last_name, after.email from customers_postgres;
+select * from customers_postgres;
 ```
 Note that the record has been updated
 
@@ -335,13 +323,9 @@ docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/
     --property schema.registry.url=http://schema-registry:8081 \
     --topic dbserver1-postgres.inventory.customers
 ```
-Note that the deleted record has been ingested into Kafka. Also note the following:
-   * before image ("before" section of avro records) is populated with the previous version of corresponding postgres tables
-   * after image ("after" section of avro records) is null. That's because the record was deleted.
-   * operation ("op field of avro record") is set to 'd'
-   * ts_ms is a kafka ingestion timestamp populated by Debezium Kafka Connector
+Note that the deleted record has been ingested into Kafka as an update with `__deleted = true`.
 
-TODO Finish of delete example (would probably require to modify the source record a bit with Kafka Connect)
+TODO Finish of delete example
 
 ### Step 9: Clean up
 
