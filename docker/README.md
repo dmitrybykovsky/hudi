@@ -180,7 +180,7 @@ In ETL terminal:
 --jdbc-url jdbc:hive2://hiveserver:10000 \
 --user hive \
 --pass hive \
---partitioned-by src_table \
+--partitioned-by deleted \
 -partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
 --base-path /user/hive/warehouse/customers_postgres \
 --database default \
@@ -208,6 +208,7 @@ describe customers_postgres;
 Check out the snapshot of the data
 ```
 select * from customers_postgres;
+select id, first_name, last_name, email, ts_ms, deleted from customers_postgres;
 ```
 
 ### Step 6: Insert a new record into `customers` table in postgres
@@ -245,7 +246,7 @@ spark-submit \
 --jdbc-url jdbc:hive2://hiveserver:10000 \
 --user hive \
 --pass hive \
---partitioned-by src_table \
+--partitioned-by deleted \
 -partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
 --base-path /user/hive/warehouse/customers_postgres \
 --database default \
@@ -255,6 +256,7 @@ spark-submit \
 In Hive terminal:
 ```
 select * from customers_postgres;
+select id, first_name, last_name, email, ts_ms, deleted from customers_postgres;
 ```
 Note that new record has been inserted into hive table
 
@@ -293,7 +295,7 @@ spark-submit \
 --jdbc-url jdbc:hive2://hiveserver:10000 \
 --user hive \
 --pass hive \
---partitioned-by src_table \
+--partitioned-by deleted \
 -partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
 --base-path /user/hive/warehouse/customers_postgres \
 --database default \
@@ -303,6 +305,7 @@ spark-submit \
 In Hive terminal:
 ```
 select * from customers_postgres;
+select id, first_name, last_name, email, ts_ms, deleted from customers_postgres;
 ```
 Note that the record has been updated
 
@@ -323,9 +326,37 @@ docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/
     --property schema.registry.url=http://schema-registry:8081 \
     --topic dbserver1-postgres.inventory.customers
 ```
-Note that the deleted record has been ingested into Kafka as an update with `__deleted = true`.
+Note that the deleted record has been ingested into Kafka as an update with `deleted = true`.
 
-TODO Finish of delete example
+In ETL terminal:
+```
+spark-submit \
+--class com.uber.hoodie.utilities.deltastreamer.HoodieDeltaStreamer $HUDI_UTILITIES_BUNDLE \
+--schemaprovider-class com.uber.hoodie.utilities.schema.SchemaRegistryProvider \
+--storage-type COPY_ON_WRITE \
+--source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
+--target-base-path /user/hive/warehouse/customers_postgres \
+--target-table customers_postgres \
+--source-ordering-field ts_ms \
+--props /var/demo/config/kafka-source-postgres.properties
+
+/var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
+--jdbc-url jdbc:hive2://hiveserver:10000 \
+--user hive \
+--pass hive \
+--partitioned-by deleted \
+-partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
+--base-path /user/hive/warehouse/customers_postgres \
+--database default \
+--table customers_postgres
+```
+
+In Hive terminal:
+```
+select * from customers_postgres;
+select id, first_name, last_name, email, ts_ms, deleted from customers_postgres;
+```
+Note that the record has been updated
 
 ### Step 9: Clean up
 
