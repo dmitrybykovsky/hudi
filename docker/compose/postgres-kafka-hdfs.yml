@@ -40,8 +40,9 @@ services:
     - SCHEMA_REGISTRY_LISTENERS=http://schema-registry:8081
     links:
     - zookeeper
+
   connect:
-    image: debezium/connect:${DEBEZIUM_VERSION}
+    build: ..
     hostname: connect
     container_name: connect
     ports:
