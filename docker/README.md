@@ -367,6 +367,6 @@ In main terminal
 docker-compose -f compose/postgres-kafka-hdfs.yml down
 ```
 
-TODO Example for S3
+[How to load multiple tables](README_multitable.md)
 
-TODO Example for multiple tables
+TODO Example for S3
