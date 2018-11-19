@@ -155,7 +155,7 @@ spark-submit \
 --target-base-path /user/hive/warehouse/customers_postgres \
 --target-table customers_postgres \
 --source-ordering-field ts_ms \
---props /var/demo/config/kafka-source-postgres.properties
+--props /var/demo/config/kafka-source-postgres-customers.properties
 ```
 Note that
    * We delegated all the heavy lifting of upserts into HDFS to `HoodieDeltaStreamer`
@@ -182,7 +182,7 @@ In ETL terminal:
 --jdbc-url jdbc:hive2://hiveserver:10000 \
 --user hive \
 --pass hive \
---partitioned-by deleted \
+--partitioned-by default \
 -partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
 --base-path /user/hive/warehouse/customers_postgres \
 --database default \
@@ -242,13 +242,13 @@ spark-submit \
 --target-base-path /user/hive/warehouse/customers_postgres \
 --target-table customers_postgres \
 --source-ordering-field ts_ms \
---props /var/demo/config/kafka-source-postgres.properties
+--props /var/demo/config/kafka-source-postgres-customers.properties
 
 /var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
 --jdbc-url jdbc:hive2://hiveserver:10000 \
 --user hive \
 --pass hive \
---partitioned-by deleted \
+--partitioned-by default \
 -partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
 --base-path /user/hive/warehouse/customers_postgres \
 --database default \
@@ -291,13 +291,13 @@ spark-submit \
 --target-base-path /user/hive/warehouse/customers_postgres \
 --target-table customers_postgres \
 --source-ordering-field ts_ms \
---props /var/demo/config/kafka-source-postgres.properties
+--props /var/demo/config/kafka-source-postgres-customers.properties
 
 /var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
 --jdbc-url jdbc:hive2://hiveserver:10000 \
 --user hive \
 --pass hive \
---partitioned-by deleted \
+--partitioned-by default \
 -partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
 --base-path /user/hive/warehouse/customers_postgres \
 --database default \
@@ -340,13 +340,13 @@ spark-submit \
 --target-base-path /user/hive/warehouse/customers_postgres \
 --target-table customers_postgres \
 --source-ordering-field ts_ms \
---props /var/demo/config/kafka-source-postgres.properties
+--props /var/demo/config/kafka-source-postgres-customers.properties
 
 /var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
 --jdbc-url jdbc:hive2://hiveserver:10000 \
 --user hive \
 --pass hive \
---partitioned-by deleted \
+--partitioned-by default \
 -partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
 --base-path /user/hive/warehouse/customers_postgres \
 --database default \
