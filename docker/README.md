@@ -39,8 +39,8 @@ This demo assumes that you are using Mac laptop
 The first step is to build hoodie
 ```
 git clone https://github.com/dmitrybykovsky/hudi.git
-git checkout postgres-kafka-hdfs-demo
 cd hudi
+git checkout postgres-kafka-hdfs-demo
 mvn package -DskipTests
 ```
 
