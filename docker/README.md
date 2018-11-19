@@ -69,7 +69,7 @@ At this point, the docker cluster will be up and running. The demo cluster bring
 First terminal is going to be used to emulate transactional system.
 Open psql shell in the first terminal
 ```
-docker-compose -f demo.yml exec postgres env PGOPTIONS="--search_path=inventory" bash -c 'psql -U $POSTGRES_USER postgres'
+docker-compose -f postgres-kafka-hdfs.yml exec postgres env PGOPTIONS="--search_path=inventory" bash -c 'psql -U $POSTGRES_USER postgres'
 ```
 
 We will refer to this terminal as Postgres terminal
