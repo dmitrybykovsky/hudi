@@ -148,10 +148,12 @@ In ETL terminal:
 Ingest snapshot of `customer` table from Kafka into HDFS
 ```
 spark-submit \
+--jars $MY_HUDI_EXTRA \
 --class com.uber.hoodie.utilities.deltastreamer.HoodieDeltaStreamer $HUDI_UTILITIES_BUNDLE \
 --schemaprovider-class com.uber.hoodie.utilities.schema.SchemaRegistryProvider \
 --storage-type COPY_ON_WRITE \
 --source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
+--payload-class com.uber.hoodie.DeleteSupportAvroPayload \
 --target-base-path /user/hive/warehouse/customers_postgres \
 --target-table customers_postgres \
 --source-ordering-field ts_ms \
@@ -235,10 +237,12 @@ Note that the new record has been ingested into Kafka.
 In ETL terminal:
 ```
 spark-submit \
+--jars $MY_HUDI_EXTRA \
 --class com.uber.hoodie.utilities.deltastreamer.HoodieDeltaStreamer $HUDI_UTILITIES_BUNDLE \
 --schemaprovider-class com.uber.hoodie.utilities.schema.SchemaRegistryProvider \
 --storage-type COPY_ON_WRITE \
 --source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
+--payload-class com.uber.hoodie.DeleteSupportAvroPayload \
 --target-base-path /user/hive/warehouse/customers_postgres \
 --target-table customers_postgres \
 --source-ordering-field ts_ms \
@@ -284,10 +288,12 @@ Note that the updated record has been ingested into Kafka.
 In ETL terminal:
 ```
 spark-submit \
+--jars $MY_HUDI_EXTRA \
 --class com.uber.hoodie.utilities.deltastreamer.HoodieDeltaStreamer $HUDI_UTILITIES_BUNDLE \
 --schemaprovider-class com.uber.hoodie.utilities.schema.SchemaRegistryProvider \
 --storage-type COPY_ON_WRITE \
 --source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
+--payload-class com.uber.hoodie.DeleteSupportAvroPayload \
 --target-base-path /user/hive/warehouse/customers_postgres \
 --target-table customers_postgres \
 --source-ordering-field ts_ms \
@@ -333,10 +339,12 @@ Note that the deleted record has been ingested into Kafka as an update with `del
 In ETL terminal:
 ```
 spark-submit \
+--jars $MY_HUDI_EXTRA \
 --class com.uber.hoodie.utilities.deltastreamer.HoodieDeltaStreamer $HUDI_UTILITIES_BUNDLE \
 --schemaprovider-class com.uber.hoodie.utilities.schema.SchemaRegistryProvider \
 --storage-type COPY_ON_WRITE \
 --source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
+--payload-class com.uber.hoodie.DeleteSupportAvroPayload \
 --target-base-path /user/hive/warehouse/customers_postgres \
 --target-table customers_postgres \
 --source-ordering-field ts_ms \
