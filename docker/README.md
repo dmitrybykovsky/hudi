@@ -79,6 +79,7 @@ In real life these steps will be scheduled in some orhestration framework like O
 Open shell session with adhoc-2 container in the second terminal
 ```
 docker exec -it adhoc-2 /bin/bash
+MY_HUDI_EXTRA=/var/hoodie/ws/docker/hoodie/hadoop/hive_base/target/my-kafka-transforms.jar
 ```
 
 We will refer to this terminal as ETL terminal
