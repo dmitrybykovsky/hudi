@@ -12,14 +12,12 @@
         "database.whitelist": "inventory",
         "database.history.kafka.bootstrap.servers": "kafkabroker:9092",
         "database.history.kafka.topic": "schema-changes-postgres.inventory",
-        "transforms": "unwrap,rename,cast",
+        "transforms": "unwrap,rename",
         "transforms.unwrap.type": "io.bykovsky.kafka.transforms.UnwrapFromDebeziumEnvelope",
         "transforms.unwrap.drop.tombstones": "true",
         "transforms.unwrap.delete.handling.mode": "rewrite",
         "transforms.unwrap.timestamp.insert": "true",
         "transforms.rename.type": "org.apache.kafka.connect.transforms.ReplaceField$Value",
-        "transforms.rename.renames": "__deleted:deleted",
-        "transforms.cast.type": "org.apache.kafka.connect.transforms.Cast$Value",
-        "transforms.cast.spec": "deleted:boolean"
+        "transforms.rename.renames": "__deleted:deleted"
     }
 }
