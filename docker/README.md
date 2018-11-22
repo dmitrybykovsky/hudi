@@ -155,6 +155,7 @@ spark-submit \
 --storage-type COPY_ON_WRITE \
 --source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
 --payload-class com.uber.hoodie.DeleteSupportAvroPayload \
+--key-generator-class com.uber.hoodie.KeyGeneratorWithDeleted \
 --target-base-path /user/hive/warehouse/customers_postgres \
 --target-table customers_postgres \
 --source-ordering-field ts_ms \
@@ -244,6 +245,7 @@ spark-submit \
 --storage-type COPY_ON_WRITE \
 --source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
 --payload-class com.uber.hoodie.DeleteSupportAvroPayload \
+--key-generator-class com.uber.hoodie.KeyGeneratorWithDeleted \
 --target-base-path /user/hive/warehouse/customers_postgres \
 --target-table customers_postgres \
 --source-ordering-field ts_ms \
@@ -295,6 +297,7 @@ spark-submit \
 --storage-type COPY_ON_WRITE \
 --source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
 --payload-class com.uber.hoodie.DeleteSupportAvroPayload \
+--key-generator-class com.uber.hoodie.KeyGeneratorWithDeleted \
 --target-base-path /user/hive/warehouse/customers_postgres \
 --target-table customers_postgres \
 --source-ordering-field ts_ms \
@@ -346,6 +349,7 @@ spark-submit \
 --storage-type COPY_ON_WRITE \
 --source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
 --payload-class com.uber.hoodie.DeleteSupportAvroPayload \
+--key-generator-class com.uber.hoodie.KeyGeneratorWithDeleted \
 --target-base-path /user/hive/warehouse/customers_postgres \
 --target-table customers_postgres \
 --source-ordering-field ts_ms \
@@ -375,6 +379,16 @@ In main terminal
 ```
 docker-compose -f compose/postgres-kafka-hdfs.yml down
 ```
+
+# Suggestions to play around
+
+This implementation supports compound record keys. Go ahead and edit `docker/demo/config/kafka-source-postgres-customers.properties`
+
+Change `hoodie.datasource.write.recordkey.field=id` into `hoodie.datasource.write.recordkey.field=id,email`
+
+Repeat steps 1-9 and check out different scenarios
+
+-------------------
 
 [How to load multiple tables](README_multitable.md)
 
