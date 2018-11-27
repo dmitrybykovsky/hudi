@@ -12,6 +12,7 @@
         "database.whitelist": "inventory",
         "database.history.kafka.bootstrap.servers": "kafkabroker:9092",
         "database.history.kafka.topic": "schema-changes-postgres.inventory",
+        "time.precision.mode": "connect",
         "transforms": "unwrap,rename",
         "transforms.unwrap.type": "io.bykovsky.kafka.transforms.UnwrapFromDebeziumEnvelope",
         "transforms.unwrap.drop.tombstones": "true",
