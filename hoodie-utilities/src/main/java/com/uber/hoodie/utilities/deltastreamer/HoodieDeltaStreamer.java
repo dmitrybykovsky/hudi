@@ -138,6 +138,7 @@ public class HoodieDeltaStreamer implements Serializable {
     // register the schemas, so that shuffle does not serialize the full schemas
     List<Schema> schemas = Arrays.asList(schemaProvider.getSourceSchema(),
         schemaProvider.getTargetSchema());
+    log.info("-----------------" + schemaProvider.getSourceSchema().getClass().toString());
     jssc.sc().getConf().registerAvroSchemas(JavaConversions.asScalaBuffer(schemas).toList());
   }
 
