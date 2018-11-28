@@ -41,7 +41,7 @@ The first step is to build hoodie
 git clone https://github.com/dmitrybykovsky/hudi.git
 cd hudi
 git checkout postgres-kafka-hdfs-demo
-mvn package -DskipTests
+mvn clean package -DskipTests -DskipITs -Dcheckstyle.skip
 ```
 
 ### Bringing up Demo Cluster
@@ -79,7 +79,6 @@ In real life these steps will be scheduled in some orhestration framework like O
 Open shell session with adhoc-2 container in the second terminal
 ```
 docker exec -it adhoc-2 /bin/bash
-MY_HUDI_EXTRA=/var/hoodie/ws/docker/hoodie/hadoop/hive_base/target/my-kafka-transforms.jar
 ```
 
 We will refer to this terminal as ETL terminal
@@ -148,23 +147,12 @@ In ETL terminal:
 
 Ingest snapshot of `customer` table from Kafka into HDFS
 ```
-spark-submit \
---jars $MY_HUDI_EXTRA \
---class com.uber.hoodie.utilities.deltastreamer.HoodieDeltaStreamer $HUDI_UTILITIES_BUNDLE \
---schemaprovider-class com.uber.hoodie.utilities.schema.SchemaRegistryProvider \
---storage-type COPY_ON_WRITE \
---source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
---payload-class com.uber.hoodie.DeleteSupportAvroPayload \
---key-generator-class com.uber.hoodie.KeyGeneratorWithDeleted \
---target-base-path /user/hive/warehouse/customers_postgres \
---target-table customers_postgres \
---source-ordering-field ts_ms \
---props /var/demo/config/kafka-source-postgres-customers.properties
+/var/hoodie/ws/docker/spark-sync.sh customers
 ```
 Note that
    * We delegated all the heavy lifting of upserts into HDFS to `HoodieDeltaStreamer`
    * We rely on `SchemaRegistryProvider` to extract schema information of topics from Schema Registry
-   * The data is ingested into `/user/hive/warehouse/customers_postgres` of HDFS
+   * The data is ingested into `/user/hive/warehouse/customers` of HDFS
    * `kafka-source-postgres.properties` contains bunch of extra details. Check it out
    * The storage type is COPY_ON_WRITE. Another option is MERGE_ON_READ. Refer to Hudi Documentation for more details
 
@@ -182,18 +170,10 @@ in order to run Hive queries against those datasets.
 In ETL terminal:
 
 ```
-/var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
---jdbc-url jdbc:hive2://hiveserver:10000 \
---user hive \
---pass hive \
---partitioned-by default \
--partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
---base-path /user/hive/warehouse/customers_postgres \
---database default \
---table customers_postgres
+/var/hoodie/ws/docker/hive-sync.sh customers 1
 ```
 
-After executing the above command a hive table named `customers_postgres` is created
+After executing the above command a hive table named `customers` is created
 which provides Read-Optimized view for the Copy On Write dataset.
 
 ### Step 5: Run Hive Queries
@@ -204,17 +184,17 @@ List all the hive tables.
 ```
 show tables;
 ```
-Note that `customers_postgres` has been created.
+Note that `customers` has been created.
 
-Check out the structure of `customers_postgres` table
+Check out the structure of `customers` table
 ```
-describe customers_postgres;
+describe customers;
 ```
 
 Check out the snapshot of the data
 ```
-select * from customers_postgres;
-select id, first_name, last_name, email, ts_ms, deleted from customers_postgres;
+select * from customers;
+select id, first_name, last_name, email, ts_ms from customers;
 ```
 
 ### Step 6: Insert a new record into `customers` table in postgres
@@ -238,34 +218,14 @@ Note that the new record has been ingested into Kafka.
 
 In ETL terminal:
 ```
-spark-submit \
---jars $MY_HUDI_EXTRA \
---class com.uber.hoodie.utilities.deltastreamer.HoodieDeltaStreamer $HUDI_UTILITIES_BUNDLE \
---schemaprovider-class com.uber.hoodie.utilities.schema.SchemaRegistryProvider \
---storage-type COPY_ON_WRITE \
---source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
---payload-class com.uber.hoodie.DeleteSupportAvroPayload \
---key-generator-class com.uber.hoodie.KeyGeneratorWithDeleted \
---target-base-path /user/hive/warehouse/customers_postgres \
---target-table customers_postgres \
---source-ordering-field ts_ms \
---props /var/demo/config/kafka-source-postgres-customers.properties
-
-/var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
---jdbc-url jdbc:hive2://hiveserver:10000 \
---user hive \
---pass hive \
---partitioned-by default \
--partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
---base-path /user/hive/warehouse/customers_postgres \
---database default \
---table customers_postgres
+/var/hoodie/ws/docker/spark-sync.sh customers
+/var/hoodie/ws/docker/hive-sync.sh customers 1
 ```
 
 In Hive terminal:
 ```
-select * from customers_postgres;
-select id, first_name, last_name, email, ts_ms, deleted from customers_postgres;
+select * from customers;
+select id, first_name, last_name, email, ts_ms from customers;
 ```
 Note that new record has been inserted into hive table
 
@@ -290,34 +250,14 @@ Note that the updated record has been ingested into Kafka.
 
 In ETL terminal:
 ```
-spark-submit \
---jars $MY_HUDI_EXTRA \
---class com.uber.hoodie.utilities.deltastreamer.HoodieDeltaStreamer $HUDI_UTILITIES_BUNDLE \
---schemaprovider-class com.uber.hoodie.utilities.schema.SchemaRegistryProvider \
---storage-type COPY_ON_WRITE \
---source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
---payload-class com.uber.hoodie.DeleteSupportAvroPayload \
---key-generator-class com.uber.hoodie.KeyGeneratorWithDeleted \
---target-base-path /user/hive/warehouse/customers_postgres \
---target-table customers_postgres \
---source-ordering-field ts_ms \
---props /var/demo/config/kafka-source-postgres-customers.properties
-
-/var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
---jdbc-url jdbc:hive2://hiveserver:10000 \
---user hive \
---pass hive \
---partitioned-by default \
--partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
---base-path /user/hive/warehouse/customers_postgres \
---database default \
---table customers_postgres
+/var/hoodie/ws/docker/spark-sync.sh customers
+/var/hoodie/ws/docker/hive-sync.sh customers 1
 ```
 
 In Hive terminal:
 ```
-select * from customers_postgres;
-select id, first_name, last_name, email, ts_ms, deleted from customers_postgres;
+select * from customers;
+select id, first_name, last_name, email, ts_ms from customers_postgres;
 ```
 Note that the record has been updated
 
@@ -342,36 +282,16 @@ Note that the deleted record has been ingested into Kafka as an update with `del
 
 In ETL terminal:
 ```
-spark-submit \
---jars $MY_HUDI_EXTRA \
---class com.uber.hoodie.utilities.deltastreamer.HoodieDeltaStreamer $HUDI_UTILITIES_BUNDLE \
---schemaprovider-class com.uber.hoodie.utilities.schema.SchemaRegistryProvider \
---storage-type COPY_ON_WRITE \
---source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
---payload-class com.uber.hoodie.DeleteSupportAvroPayload \
---key-generator-class com.uber.hoodie.KeyGeneratorWithDeleted \
---target-base-path /user/hive/warehouse/customers_postgres \
---target-table customers_postgres \
---source-ordering-field ts_ms \
---props /var/demo/config/kafka-source-postgres-customers.properties
-
-/var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
---jdbc-url jdbc:hive2://hiveserver:10000 \
---user hive \
---pass hive \
---partitioned-by default \
--partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
---base-path /user/hive/warehouse/customers_postgres \
---database default \
---table customers_postgres
+/var/hoodie/ws/docker/spark-sync.sh customers
+/var/hoodie/ws/docker/hive-sync.sh customers 1
 ```
 
 In Hive terminal:
 ```
-select * from customers_postgres;
-select id, first_name, last_name, email, ts_ms, deleted from customers_postgres;
+select * from customers;
+select id, first_name, last_name, email, ts_ms from customers;
 ```
-Note that the record has been updated
+Note that the record has been deleted
 
 ### Step 9: Clean up
 
