@@ -1,7 +1,7 @@
 drop table ${hiveconf:table}_avro;
 
 CREATE EXTERNAL TABLE ${hiveconf:table}_avro
-PARTITIONED BY (`not_there` String) 
+PARTITIONED BY (part_purchaser String, part_order_date date)
 STORED AS AVRO
 LOCATION '/user/hive/warehouse/${hiveconf:table}/'
 TBLPROPERTIES ('avro.schema.literal'='${hiveconf:schema}');
