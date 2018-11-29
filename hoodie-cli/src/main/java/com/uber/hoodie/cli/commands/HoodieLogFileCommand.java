@@ -52,7 +52,7 @@ import org.springframework.shell.core.annotation.CliAvailabilityIndicator;
 import org.springframework.shell.core.annotation.CliCommand;
 import org.springframework.shell.core.annotation.CliOption;
 import org.springframework.stereotype.Component;
-import parquet.avro.AvroSchemaConverter;
+import org.apache.parquet.avro.AvroSchemaConverter;
 import scala.Tuple2;
 import scala.Tuple3;
 

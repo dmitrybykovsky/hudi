@@ -38,7 +38,7 @@ import org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat;
 import org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import parquet.schema.MessageType;
+import org.apache.parquet.schema.MessageType;
 
 
 /**

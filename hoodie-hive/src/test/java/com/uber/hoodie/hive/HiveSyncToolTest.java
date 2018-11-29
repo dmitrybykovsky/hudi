@@ -37,9 +37,9 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runners.model.InitializationError;
-import parquet.schema.MessageType;
-import parquet.schema.OriginalType;
-import parquet.schema.PrimitiveType;
+import org.apache.parquet.schema.MessageType;
+import org.apache.parquet.schema.OriginalType;
+import org.apache.parquet.schema.PrimitiveType;
 
 @SuppressWarnings("ConstantConditions")
 public class HiveSyncToolTest {
@@ -61,8 +61,8 @@ public class HiveSyncToolTest {
   @Test
   public void testSchemaConvertArray() throws IOException {
     // Testing the 3-level annotation structure
-    MessageType schema = parquet.schema.Types.buildMessage().optionalGroup()
-        .as(parquet.schema.OriginalType.LIST).repeatedGroup()
+    MessageType schema = org.apache.parquet.schema.Types.buildMessage().optionalGroup()
+        .as(org.apache.parquet.schema.OriginalType.LIST).repeatedGroup()
         .optional(PrimitiveType.PrimitiveTypeName.INT32).named("element")
         .named("list").named("int_list").named("ArrayOfInts");
 
@@ -70,8 +70,8 @@ public class HiveSyncToolTest {
     assertEquals("`int_list` ARRAY< int>", schemaString);
 
     // A array of arrays
-    schema = parquet.schema.Types.buildMessage().optionalGroup()
-        .as(parquet.schema.OriginalType.LIST).repeatedGroup().requiredGroup()
+    schema = org.apache.parquet.schema.Types.buildMessage().optionalGroup()
+        .as(org.apache.parquet.schema.OriginalType.LIST).repeatedGroup().requiredGroup()
         .as(OriginalType.LIST).repeatedGroup()
         .required(PrimitiveType.PrimitiveTypeName.INT32).named("element").named("list")
         .named("element").named("list").named("int_list_list").named("ArrayOfArrayOfInts");
@@ -80,8 +80,8 @@ public class HiveSyncToolTest {
     assertEquals("`int_list_list` ARRAY< ARRAY< int>>", schemaString);
 
     // A list of integers
-    schema = parquet.schema.Types.buildMessage().optionalGroup()
-        .as(parquet.schema.OriginalType.LIST)
+    schema = org.apache.parquet.schema.Types.buildMessage().optionalGroup()
+        .as(org.apache.parquet.schema.OriginalType.LIST)
         .repeated(PrimitiveType.PrimitiveTypeName.INT32).named("element").named("int_list")
         .named("ArrayOfInts");
 
@@ -89,8 +89,8 @@ public class HiveSyncToolTest {
     assertEquals("`int_list` ARRAY< int>", schemaString);
 
     // A list of structs with two fields
-    schema = parquet.schema.Types.buildMessage().optionalGroup()
-        .as(parquet.schema.OriginalType.LIST).repeatedGroup()
+    schema = org.apache.parquet.schema.Types.buildMessage().optionalGroup()
+        .as(org.apache.parquet.schema.OriginalType.LIST).repeatedGroup()
         .required(PrimitiveType.PrimitiveTypeName.BINARY).named("str")
         .required(PrimitiveType.PrimitiveTypeName.INT32).named("num").named("element")
         .named("tuple_list").named("ArrayOfTuples");
@@ -101,8 +101,8 @@ public class HiveSyncToolTest {
     // A list of structs with a single field
     // For this case, since the inner group name is "array", we treat the
     // element type as a one-element struct.
-    schema = parquet.schema.Types.buildMessage().optionalGroup()
-        .as(parquet.schema.OriginalType.LIST).repeatedGroup()
+    schema = org.apache.parquet.schema.Types.buildMessage().optionalGroup()
+        .as(org.apache.parquet.schema.OriginalType.LIST).repeatedGroup()
         .required(PrimitiveType.PrimitiveTypeName.BINARY).named("str").named("array")
         .named("one_tuple_list").named("ArrayOfOneTuples");
 
@@ -112,8 +112,8 @@ public class HiveSyncToolTest {
     // A list of structs with a single field
     // For this case, since the inner group name ends with "_tuple", we also treat the
     // element type as a one-element struct.
-    schema = parquet.schema.Types.buildMessage().optionalGroup()
-        .as(parquet.schema.OriginalType.LIST).repeatedGroup()
+    schema = org.apache.parquet.schema.Types.buildMessage().optionalGroup()
+        .as(org.apache.parquet.schema.OriginalType.LIST).repeatedGroup()
         .required(PrimitiveType.PrimitiveTypeName.BINARY).named("str")
         .named("one_tuple_list_tuple").named("one_tuple_list").named("ArrayOfOneTuples2");
 
@@ -123,8 +123,8 @@ public class HiveSyncToolTest {
     // A list of structs with a single field
     // Unlike the above two cases, for this the element type is the type of the
     // only field in the struct.
-    schema = parquet.schema.Types.buildMessage().optionalGroup()
-        .as(parquet.schema.OriginalType.LIST).repeatedGroup()
+    schema = org.apache.parquet.schema.Types.buildMessage().optionalGroup()
+        .as(org.apache.parquet.schema.OriginalType.LIST).repeatedGroup()
         .required(PrimitiveType.PrimitiveTypeName.BINARY).named("str")
         .named("one_tuple_list").named("one_tuple_list").named("ArrayOfOneTuples3");
 
@@ -132,8 +132,8 @@ public class HiveSyncToolTest {
     assertEquals("`one_tuple_list` ARRAY< binary>", schemaString);
 
     // A list of maps
-    schema = parquet.schema.Types.buildMessage().optionalGroup()
-        .as(parquet.schema.OriginalType.LIST).repeatedGroup().as(OriginalType.MAP)
+    schema = org.apache.parquet.schema.Types.buildMessage().optionalGroup()
+        .as(org.apache.parquet.schema.OriginalType.LIST).repeatedGroup().as(OriginalType.MAP)
         .repeatedGroup().as(OriginalType.MAP_KEY_VALUE)
         .required(PrimitiveType.PrimitiveTypeName.BINARY).as(OriginalType.UTF8)
         .named("string_key").required(PrimitiveType.PrimitiveTypeName.INT32)
