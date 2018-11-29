@@ -12,8 +12,8 @@ spark-submit \
 --schemaprovider-class com.uber.hoodie.utilities.schema.SchemaRegistryProvider \
 --storage-type COPY_ON_WRITE \
 --source-class com.uber.hoodie.utilities.sources.AvroKafkaSource \
---payload-class com.uber.hoodie.DeleteSupportAvroPayload \
---key-generator-class com.uber.hoodie.KeyGeneratorWithDeleted \
+--payload-class com.uber.hoodie.MyAvroPayloadWithDeleteSupport \
+--key-generator-class com.uber.hoodie.MyKeyGenerator \
 --target-base-path /user/hive/warehouse/${table} \
 --target-table ${table} \
 --source-ordering-field ts_ms \
