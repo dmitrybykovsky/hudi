@@ -68,14 +68,14 @@
       <groupId>org.apache.parquet</groupId>
       <artifactId>parquet-avro</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.twitter</groupId>
-      <artifactId>parquet-avro</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.twitter</groupId>
-      <artifactId>parquet-hadoop-bundle</artifactId>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>com.twitter</groupId>-->
+      <!--<artifactId>parquet-avro</artifactId>-->
+    <!--</dependency>-->
+    <!--<dependency>-->
+      <!--<groupId>com.twitter</groupId>-->
+      <!--<artifactId>parquet-hadoop-bundle</artifactId>-->
+    <!--</dependency>-->
     <dependency>
       <groupId>com.twitter.common</groupId>
       <artifactId>objectsize</artifactId>

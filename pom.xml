@@ -468,21 +468,21 @@
 
       <!-- Storage formats -->
       <!-- Spark parquet version 1.7.0 does not play well with the hive 1.1.0 installed in cluster (which requires twitter parquet 1.5.0) -->
-      <dependency>
-        <groupId>com.twitter</groupId>
-        <artifactId>parquet-hadoop-bundle</artifactId>
-        <version>1.6.0</version>
-      </dependency>
-      <dependency>
-        <groupId>com.twitter</groupId>
-        <artifactId>parquet-hive-bundle</artifactId>
-        <version>1.6.0</version>
-      </dependency>
-      <dependency>
-        <groupId>com.twitter</groupId>
-        <artifactId>parquet-avro</artifactId>
-        <version>1.6.0</version>
-      </dependency>
+      <!--<dependency>-->
+        <!--<groupId>com.twitter</groupId>-->
+        <!--<artifactId>parquet-hadoop-bundle</artifactId>-->
+        <!--<version>1.6.0</version>-->
+      <!--</dependency>-->
+      <!--<dependency>-->
+        <!--<groupId>com.twitter</groupId>-->
+        <!--<artifactId>parquet-hive-bundle</artifactId>-->
+        <!--<version>1.6.0</version>-->
+      <!--</dependency>-->
+      <!--<dependency>-->
+        <!--<groupId>com.twitter</groupId>-->
+        <!--<artifactId>parquet-avro</artifactId>-->
+        <!--<version>1.6.0</version>-->
+      <!--</dependency>-->
 
       <dependency>
         <groupId>org.apache.parquet</groupId>

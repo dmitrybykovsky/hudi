@@ -27,21 +27,18 @@ import com.uber.hoodie.hive.HiveSyncConfig;
 import com.uber.hoodie.hive.HoodieHiveSyncException;
 import com.uber.hoodie.hive.SchemaDifference;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import parquet.schema.DecimalMetadata;
-import parquet.schema.GroupType;
-import parquet.schema.MessageType;
-import parquet.schema.OriginalType;
-import parquet.schema.PrimitiveType;
-import parquet.schema.Type;
+import org.apache.parquet.schema.DecimalMetadata;
+import org.apache.parquet.schema.GroupType;
+import org.apache.parquet.schema.MessageType;
+import org.apache.parquet.schema.OriginalType;
+import org.apache.parquet.schema.PrimitiveType;
+import org.apache.parquet.schema.Type;
 
 /**
  * Schema Utilities
@@ -188,6 +185,9 @@ public class SchemaUtil {
 
             @Override
             public String convertINT32(PrimitiveType.PrimitiveTypeName primitiveTypeName) {
+              if (originalType == OriginalType.DATE) {
+                return "date";
+              }
               return "int";
             }
 
@@ -428,6 +428,10 @@ public class SchemaUtil {
     if (hiveSchema.containsKey(partitionKey)) {
       return hiveSchema.get(partitionKey);
     }
+    String ticketPartitionKey = tickSurround(partitionKey);
+    if (hiveSchema.containsKey(ticketPartitionKey)) {
+      return hiveSchema.get(ticketPartitionKey);
+    }
     // Default the unknown partition fields to be String
     // TODO - all partition fields should be part of the schema. datestr is treated as special.
     // Dont do that
@@ -449,7 +453,7 @@ public class SchemaUtil {
     }
     reader.close();
     if (lastBlock != null) {
-      return new parquet.avro.AvroSchemaConverter().convert(lastBlock.getSchema());
+      return new org.apache.parquet.avro.AvroSchemaConverter().convert(lastBlock.getSchema());
     }
     return null;
   }

@@ -103,9 +103,9 @@ List the available table
 \dt
 ```
 
-In this demo we will be using `customers` table. Let's explore it
+In this demo we will be using `orders` table. Let's explore it
 ```
-select * from customers;
+select * from orders;
 ```
 
 ### Step 2 : Ingest the initial snapshot of transactional data into Kafka
@@ -117,13 +117,13 @@ Upon registration the following happened:
    * Avro schemas for all the tables were published into Schema Registry
    * Initial snapshots were ingested into Kafka topics
 
-Explore avro schema of `dbserver1-postgres.inventory.customers` topic published in Schema Registry
+Explore avro schema of `dbserver1-postgres.inventory.orders` topic published in Schema Registry
 In main terminal:
 ```
-curl -X GET http://localhost:8081/subjects/dbserver1-postgres.inventory.customers-value/versions/1 | jq '.schema | fromjson'
+curl -X GET http://localhost:8081/subjects/dbserver1-postgres.inventory.orders-value/versions/1 | jq '.schema | fromjson'
 ```
 
-Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.customers` topic
+Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.orders` topic
 In main terminal:
 ```
 docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/kafka-avro-console-consumer \
@@ -131,7 +131,7 @@ docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/
     --from-beginning \
     --property print.key=true \
     --property schema.registry.url=http://schema-registry:8081 \
-    --topic dbserver1-postgres.inventory.customers
+    --topic dbserver1-postgres.inventory.orders
 ```
 Note that all the records from postgres `customer` table have been ingested into Kafka.
 
@@ -144,15 +144,15 @@ automatically initializes the datasets in the file-system if they do not exist y
 
 In ETL terminal:
 
-Ingest snapshot of `customer` table from Kafka into HDFS
+Ingest snapshot of `orders` table from Kafka into HDFS
 ```
-/var/hoodie/ws/docker/spark-sync.sh customers
+/var/hoodie/ws/docker/spark-sync.sh orders
 ```
 Note that
    * We delegated all the heavy lifting of upserts into HDFS to `HoodieDeltaStreamer`
    * We rely on `SchemaRegistryProvider` to extract schema information of topics from Schema Registry
-   * The data is ingested into `/user/hive/warehouse/customers` of HDFS
-   * `kafka-source-postgres.properties` contains bunch of extra details. Check it out
+   * The data is ingested into `/user/hive/warehouse/orders` of HDFS
+   * `kafka-source-postgres-orders.properties` contains bunch of extra details. Check it out
    * The storage type is COPY_ON_WRITE. Another option is MERGE_ON_READ. Refer to Hudi Documentation for more details
 
 You can use HDFS web-browser to look at the datasets
@@ -169,7 +169,16 @@ in order to run Hive queries against those datasets.
 In ETL terminal:
 
 ```
-/var/hoodie/ws/docker/hive-sync.sh customers 1
+/var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
+--jdbc-url jdbc:hive2://hiveserver:10000 \
+--user hive \
+--pass hive \
+--partitioned-by purchaser \
+--partitioned-by order_date \
+-partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
+--base-path /user/hive/warehouse/orders \
+--database default \
+--table orders
 ```
 
 After executing the above command a hive table named `customers` is created
@@ -183,27 +192,27 @@ List all the hive tables.
 ```
 show tables;
 ```
-Note that `customers` has been created.
+Note that `orders` has been created.
 
-Check out the structure of `customers` table
+Check out the structure of `orders` table
 ```
-describe customers;
+describe orders;
 ```
 
 Check out the snapshot of the data
 ```
-select * from customers;
-select id, first_name, last_name, email, ts_ms from customers;
+select * from orders;
+select id, order_date, purchaser, quantity, product_id, ts_ms from orders;
 ```
 
-### Step 6: Insert a new record into `customers` table in postgres
+### Step 6: Insert a new record into `orders` table in postgres
 
 In Postgres terminal:
 ```
-insert into customers (first_name, last_name, email) values ('D','B','d.n@g.com');
+insert into orders (order_date, purchaser, quantity, product_id) values ('2018-11-20', 1001, 123, 102);
 ```
 
-Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.customers` topic
+Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.orders` topic
 In main terminal:
 ```
 docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/kafka-avro-console-consumer \
@@ -211,31 +220,40 @@ docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/
     --from-beginning \
     --property print.key=true \
     --property schema.registry.url=http://schema-registry:8081 \
-    --topic dbserver1-postgres.inventory.customers
+    --topic dbserver1-postgres.inventory.orders
 ```
 Note that the new record has been ingested into Kafka.
 
 In ETL terminal:
 ```
 /var/hoodie/ws/docker/spark-sync.sh customers
-/var/hoodie/ws/docker/hive-sync.sh customers 1
+/var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
+--jdbc-url jdbc:hive2://hiveserver:10000 \
+--user hive \
+--pass hive \
+--partitioned-by purchaser \
+--partitioned-by order_date \
+-partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
+--base-path /user/hive/warehouse/orders \
+--database default \
+--table orders
 ```
 
 In Hive terminal:
 ```
-select * from customers;
-select id, first_name, last_name, email, ts_ms from customers;
+select * from orders;
+select id, order_date, purchaser, quantity, product_id, ts_ms from orders;
 ```
 Note that new record has been inserted into hive table
 
-### Step 7: Update a record in `customers` table in postgres
+### Step 7: Update a record in `orders` table in postgres
 
 In Postgres terminal:
 ```
-update customers set first_name = 'Dmitry' where id = 1005;
+update orders set quantity = 555 where id = 10001;
 ```
 
-Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.customers` topic
+Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.orders` topic
 In main terminal:
 ```
 docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/kafka-avro-console-consumer \
@@ -243,20 +261,29 @@ docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/
     --from-beginning \
     --property print.key=true \
     --property schema.registry.url=http://schema-registry:8081 \
-    --topic dbserver1-postgres.inventory.customers
+    --topic dbserver1-postgres.inventory.orders
 ```
 Note that the updated record has been ingested into Kafka.
 
 In ETL terminal:
 ```
 /var/hoodie/ws/docker/spark-sync.sh customers
-/var/hoodie/ws/docker/hive-sync.sh customers 1
+/var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
+--jdbc-url jdbc:hive2://hiveserver:10000 \
+--user hive \
+--pass hive \
+--partitioned-by purchaser \
+--partitioned-by order_date \
+-partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
+--base-path /user/hive/warehouse/orders \
+--database default \
+--table orders
 ```
 
 In Hive terminal:
 ```
-select * from customers;
-select id, first_name, last_name, email, ts_ms from customers_postgres;
+select * from orders;
+select id, order_date, purchaser, quantity, product_id, ts_ms from orders;
 ```
 Note that the record has been updated
 
@@ -264,10 +291,10 @@ Note that the record has been updated
 
 In Postgres terminal:
 ```
-delete from customers where id = 1005;
+delete from orders where id = 10001;
 ```
 
-Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.customers` topic
+Use `kafka-avro-console-consumer` to explore `dbserver1-postgres.inventory.orders` topic
 In main terminal:
 ```
 docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/kafka-avro-console-consumer \
@@ -275,20 +302,29 @@ docker-compose -f compose/postgres-kafka-hdfs.yml exec schema-registry /usr/bin/
     --from-beginning \
     --property print.key=true \
     --property schema.registry.url=http://schema-registry:8081 \
-    --topic dbserver1-postgres.inventory.customers
+    --topic dbserver1-postgres.inventory.orders
 ```
 Note that the deleted record has been ingested into Kafka as an update with `deleted = true`.
 
 In ETL terminal:
 ```
 /var/hoodie/ws/docker/spark-sync.sh customers
-/var/hoodie/ws/docker/hive-sync.sh customers 1
+/var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
+--jdbc-url jdbc:hive2://hiveserver:10000 \
+--user hive \
+--pass hive \
+--partitioned-by purchaser \
+--partitioned-by order_date \
+-partition-value-extractor com.uber.hoodie.hive.MultiPartKeysValueExtractor \
+--base-path /user/hive/warehouse/orders \
+--database default \
+--table orders
 ```
 
 In Hive terminal:
 ```
-select * from customers;
-select id, first_name, last_name, email, ts_ms from customers;
+select * from orders;
+select id, order_date, purchaser, quantity, product_id, ts_ms from orders;
 ```
 Note that the record has been deleted
 
@@ -298,14 +334,6 @@ In main terminal
 ```
 docker-compose -f compose/postgres-kafka-hdfs.yml down
 ```
-
-# Suggestions to play around
-
-This implementation supports compound record keys. Go ahead and edit `docker/demo/config/kafka-source-postgres-customers.properties`
-
-Change `hoodie.datasource.write.recordkey.field=id` into `hoodie.datasource.write.recordkey.field=id,email`
-
-Repeat steps 1-9 and check out different scenarios
 
 -------------------
 
