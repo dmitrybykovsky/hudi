@@ -226,7 +226,7 @@ Note that the new record has been ingested into Kafka.
 
 In ETL terminal:
 ```
-/var/hoodie/ws/docker/spark-sync.sh customers
+/var/hoodie/ws/docker/spark-sync.sh orders
 /var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
 --jdbc-url jdbc:hive2://hiveserver:10000 \
 --user hive \
@@ -267,7 +267,7 @@ Note that the updated record has been ingested into Kafka.
 
 In ETL terminal:
 ```
-/var/hoodie/ws/docker/spark-sync.sh customers
+/var/hoodie/ws/docker/spark-sync.sh orders
 /var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
 --jdbc-url jdbc:hive2://hiveserver:10000 \
 --user hive \
@@ -308,7 +308,7 @@ Note that the deleted record has been ingested into Kafka as an update with `del
 
 In ETL terminal:
 ```
-/var/hoodie/ws/docker/spark-sync.sh customers
+/var/hoodie/ws/docker/spark-sync.sh orders
 /var/hoodie/ws/hoodie-hive/run_sync_tool.sh \
 --jdbc-url jdbc:hive2://hiveserver:10000 \
 --user hive \
