@@ -17,6 +17,7 @@
 package com.uber.hoodie.common.model;
 
 import com.uber.hoodie.common.util.HoodieAvroUtils;
+import com.uber.hoodie.exception.HoodieIOException;
 import java.io.IOException;
 import java.util.Optional;
 import org.apache.avro.Schema;
@@ -29,10 +30,20 @@ import org.apache.avro.generic.IndexedRecord;
  */
 public class HoodieAvroPayload implements HoodieRecordPayload<HoodieAvroPayload> {
 
-  private final Optional<GenericRecord> record;
+  // Store the GenericRecord converted to bytes - 1) Doesn't store schema hence memory efficient 2) Makes the payload
+  // java serializable
+  private final byte [] recordBytes;
 
   public HoodieAvroPayload(Optional<GenericRecord> record) {
-    this.record = record;
+    try {
+      if (record.isPresent()) {
+        this.recordBytes = HoodieAvroUtils.avroToBytes(record.get());
+      } else {
+        this.recordBytes = new byte[0];
+      }
+    } catch (IOException io) {
+      throw new HoodieIOException("Cannot convert record to bytes", io);
+    }
   }
 
   @Override
@@ -48,6 +59,10 @@ public class HoodieAvroPayload implements HoodieRecordPayload<HoodieAvroPayload>
 
   @Override
   public Optional<IndexedRecord> getInsertValue(Schema schema) throws IOException {
+    if (recordBytes.length == 0) {
+      return Optional.empty();
+    }
+    Optional<GenericRecord> record = Optional.of(HoodieAvroUtils.bytesToAvro(recordBytes, schema));
     return record.map(r -> HoodieAvroUtils.rewriteRecord(r, schema));
   }
 }

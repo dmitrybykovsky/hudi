@@ -73,6 +73,11 @@
       <name>Nishith Agarwal</name>
       <organization>Uber</organization>
     </developer>
+    <developer>
+      <id>bvaradar</id>
+      <name>Balaji Varadharajan</name>
+      <organization>Uber</organization>
+    </developer>
   </developers>
 
   <contributors>
@@ -98,10 +103,6 @@
     </contributor>
     <contributor>
       <name>Kaushik Devarajaiah</name>
-      <organization>Uber</organization>
-    </contributor>
-    <contributor>
-      <name>Balaji Varadharajan</name>
       <organization>Uber</organization>
     </contributor>
     <contributor>
@@ -195,6 +196,29 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+           <groupId>org.scalastyle</groupId>
+           <artifactId>scalastyle-maven-plugin</artifactId>
+           <version>1.0.0</version>
+           <configuration>
+             <verbose>false</verbose>
+             <failOnViolation>true</failOnViolation>
+             <includeTestSourceDirectory>true</includeTestSourceDirectory>
+             <failOnWarning>false</failOnWarning>
+             <sourceDirectory>${project.basedir}/src/main/scala</sourceDirectory>
+             <testSourceDirectory>${project.basedir}/src/test/scala</testSourceDirectory>
+             <configLocation>style/scalastyle-config.xml</configLocation>
+             <outputEncoding>UTF-8</outputEncoding>
+           </configuration>
+           <executions>
+             <execution>
+               <phase>compile</phase>
+               <goals>
+                 <goal>check</goal>
+               </goals>
+             </execution>
+           </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -645,11 +669,6 @@
         <version>1.9.13</version>
       </dependency>
 
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>${junit.version}</version>
-      </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-hdfs</artifactId>

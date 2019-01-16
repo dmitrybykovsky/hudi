@@ -38,10 +38,10 @@ class DataSourceDefaultsTest extends AssertionsForJUnit {
   }
 
 
-  private def getKeyConfig(recordKeyFieldName: String, paritionPathField: String): TypedProperties = {
+  private def getKeyConfig(recordKeyFieldName: String, partitionPathField: String): TypedProperties = {
     val props = new TypedProperties()
     props.setProperty(DataSourceWriteOptions.RECORDKEY_FIELD_OPT_KEY, recordKeyFieldName)
-    props.setProperty(DataSourceWriteOptions.PARTITIONPATH_FIELD_OPT_KEY, paritionPathField)
+    props.setProperty(DataSourceWriteOptions.PARTITIONPATH_FIELD_OPT_KEY, partitionPathField)
     props
   }
 
@@ -107,11 +107,11 @@ class DataSourceDefaultsTest extends AssertionsForJUnit {
     // it will provide the record with greatest combine value
     val combinedPayload12 = overWritePayload1.preCombine(overWritePayload2)
     val combinedGR12 = combinedPayload12.getInsertValue(schema).get().asInstanceOf[GenericRecord]
-    assertEquals("field2", combinedGR12.get("field1"))
+    assertEquals("field2", combinedGR12.get("field1").toString)
 
     // and it will be deterministic, to order of processing.
     val combinedPayload21 = overWritePayload2.preCombine(overWritePayload1)
     val combinedGR21 = combinedPayload21.getInsertValue(schema).get().asInstanceOf[GenericRecord]
-    assertEquals("field2", combinedGR21.get("field1"))
+    assertEquals("field2", combinedGR21.get("field1").toString)
   }
 }

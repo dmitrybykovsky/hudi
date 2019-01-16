@@ -176,6 +176,11 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
 
   public Iterator<List<WriteStatus>> handleUpdate(String commitTime, String fileId,
       Iterator<HoodieRecord<T>> recordItr) throws IOException {
+    // This is needed since sometimes some buckets are never picked in getPartition() and end up with 0 records
+    if (!recordItr.hasNext()) {
+      logger.info("Empty partition with fileId => " + fileId);
+      return Collections.singletonList((List<WriteStatus>) Collections.EMPTY_LIST).iterator();
+    }
     // these are updates
     HoodieMergeHandle upsertHandle = getUpdateHandle(commitTime, fileId, recordItr);
     return handleUpdateInternal(upsertHandle, commitTime, fileId);
@@ -196,17 +201,15 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
           "Error in finding the old file path at commit " + commitTime + " for fileId: " + fileId);
     } else {
       AvroReadSupport.setAvroReadSchema(getHadoopConf(), upsertHandle.getSchema());
-      ParquetReader<IndexedRecord> reader = AvroParquetReader.<IndexedRecord>builder(upsertHandle.getOldFilePath())
-          .withConf(getHadoopConf()).build();
       BoundedInMemoryExecutor<GenericRecord, GenericRecord, Void> wrapper = null;
-      try {
+      try (ParquetReader<IndexedRecord> reader = AvroParquetReader.<IndexedRecord>builder(upsertHandle.getOldFilePath())
+              .withConf(getHadoopConf()).build()) {
         wrapper = new SparkBoundedInMemoryExecutor(config, new ParquetReaderIterator(reader),
-            new UpdateHandler(upsertHandle), x -> x);
+                new UpdateHandler(upsertHandle), x -> x);
         wrapper.execute();
       } catch (Exception e) {
         throw new HoodieException(e);
       } finally {
-        reader.close();
         upsertHandle.close();
         if (null != wrapper) {
           wrapper.shutdownNow();
@@ -235,6 +238,11 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
 
   public Iterator<List<WriteStatus>> handleInsert(String commitTime,
       Iterator<HoodieRecord<T>> recordItr) throws Exception {
+    // This is needed since sometimes some buckets are never picked in getPartition() and end up with 0 records
+    if (!recordItr.hasNext()) {
+      logger.info("Empty partition");
+      return Collections.singletonList((List<WriteStatus>) Collections.EMPTY_LIST).iterator();
+    }
     return new CopyOnWriteLazyInsertIterable<>(recordItr, config, commitTime, this);
   }
 
@@ -470,7 +478,7 @@ public class HoodieCopyOnWriteTable<T extends HoodieRecordPayload> extends Hoodi
                 .merge(e2)).collect();
 
     Map<String, PartitionCleanStat> partitionCleanStatsMap = partitionCleanStats.stream()
-        .collect(Collectors.toMap(e -> e._1(), e -> e._2()));
+        .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
 
     HoodieCleanHelper cleaner = new HoodieCleanHelper(this, config);
     // Return PartitionCleanStat for each partition passed.

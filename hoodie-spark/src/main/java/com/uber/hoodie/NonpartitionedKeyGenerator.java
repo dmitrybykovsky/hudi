@@ -16,25 +16,26 @@
  *
  */
 
-package com.uber.hoodie.utilities.sources;
+package com.uber.hoodie;
 
+import com.uber.hoodie.common.model.HoodieKey;
 import com.uber.hoodie.common.util.TypedProperties;
-import com.uber.hoodie.utilities.schema.SchemaProvider;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 
 /**
- * DFS Source that reads json data
+ * Simple Key generator for unpartitioned Hive Tables
  */
-public class JsonDFSSource extends DFSSource {
+public class NonpartitionedKeyGenerator extends SimpleKeyGenerator {
 
-  public JsonDFSSource(TypedProperties props, JavaSparkContext sparkContext, SchemaProvider schemaProvider) {
-    super(props, sparkContext, schemaProvider);
+  private static final String EMPTY_PARTITION = "";
+
+  public NonpartitionedKeyGenerator(TypedProperties props) {
+    super(props);
   }
 
   @Override
-  protected JavaRDD<GenericRecord> fromFiles(AvroConvertor convertor, String pathStr) {
-    return sparkContext.textFile(pathStr).map(convertor::fromJson);
+  public HoodieKey getKey(GenericRecord record) {
+    String recordKey = DataSourceUtils.getNestedFieldValAsString(record, recordKeyField);
+    return new HoodieKey(recordKey, EMPTY_PARTITION);
   }
 }
