@@ -50,6 +50,8 @@ import com.uber.hoodie.utilities.sources.JsonDFSSource;
 import com.uber.hoodie.utilities.sources.Source;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -138,11 +140,15 @@ public class HoodieDeltaStreamer implements Serializable {
     // register the schemas, so that shuffle does not serialize the full schemas
     List<Schema> schemas = Arrays.asList(schemaProvider.getSourceSchema(),
         schemaProvider.getTargetSchema());
-    jssc.sc().getConf().registerAvroSchemas(JavaConversions.asScalaBuffer(schemas).toList());
+    jssc.sc().getConf().registerAvroSchemas(JavaConversions.asScalaBuffer(schemas).toSeq());
   }
 
   public void sync() throws Exception {
     // Retrieve the previous round checkpoints, if any
+    Class klass = Schema.class;
+    URL location = klass.getResource('/' + klass.getName().replace('.', '/') + ".class");
+    log.info("JAR: ");
+    log.info(location);
     Optional<String> resumeCheckpointStr = Optional.empty();
     if (commitTimelineOpt.isPresent()) {
       Optional<HoodieInstant> lastCommit = commitTimelineOpt.get().lastInstant();

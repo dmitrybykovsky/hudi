@@ -230,6 +230,7 @@ public class HoodieHiveClient {
    * Scan table partitions
    */
   List<Partition> scanTablePartitions() throws TException {
+
     return client.listPartitions(syncConfig.databaseName, syncConfig.tableName, (short) -1);
   }
 

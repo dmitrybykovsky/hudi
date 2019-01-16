@@ -133,7 +133,7 @@
     <hive11.groupid>org.apache.hive</hive11.groupid>
     <hive11.version>1.1.1</hive11.version>
     <metrics.version>3.1.1</metrics.version>
-    <spark.version>2.1.0</spark.version>
+    <spark.version>2.3.0</spark.version>
     <avro.version>1.8.2</avro.version>
     <scala.version>2.11.8</scala.version>
     <scala.libversion>2.11</scala.libversion>
@@ -749,6 +749,7 @@
           <groupId>${hive12.groupid}</groupId>
           <artifactId>hive-exec</artifactId>
           <version>${hive12.version}</version>
+          <classifier>core</classifier>
           <scope>provided</scope>
         </dependency>
       </dependencies>
