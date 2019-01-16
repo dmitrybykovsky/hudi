@@ -4,7 +4,7 @@ export DEBEZIUM_VERSION=0.9
 export MY_HUDI_EXTRA_VERSION=0.1-SNAPSHOT
 
 rm -rf kafkatransforms
-git clone https://github.com/dmitrybykovsky/kafkatransforms.git
+git clone git@github.com:dmitrybykovsky/kafkatransforms.git
 cd kafkatransforms
 mvn clean package -DskipTests
 cp target/kafka-transforms-${MY_HUDI_EXTRA_VERSION}.jar ../hoodie/hadoop/hive_base/target/my-kafka-transforms.jar
